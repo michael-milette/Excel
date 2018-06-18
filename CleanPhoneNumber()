@@ -1,0 +1,34 @@
+' Function: CleanPhoneNumber
+' Parameters: Txt (string) - Phone number to be cleaned.
+' Return: (string) - Cleaned Phone number
+' Usage: Add to a VBA module. Add =CleanPhoneNumber(A1) in a cell where A1 contains a phone number.
+Function CleanPhoneNumber(Txt As String) As String
+    Dim MaxLen, Pos, Start
+    
+    ' Remove trailing spaces.
+    Txt = Trim(Txt)
+    
+    ' Remove leading 1-.
+    If Mid(Txt, 1, 2) = "1-" Then
+        Txt = Mid(Txt, 3)
+    End If
+    
+    ' Skip over any text that is not part of the phone number.
+    MaxLen = Len(Txt)
+    For Start = 1 To MaxLen
+        If Mid(Txt, Start, 1) >= "0" And Mid(Txt, Start, 1) <= "9" Then
+            Exit For
+        End If
+    Next
+    
+    ' Save any digits, skipping characters sometimes included in a phone numbers up until first non-digit.
+    For Pos = Start To MaxLen
+        Select Case Mid(Txt, Pos, 1)
+            Case 0 To 9
+               CleanPhoneNumber = CleanPhoneNumber & Mid(Txt, Pos, 1)
+            Case "(", ")", " ", "-", "."
+            Case Else
+                Exit For
+        End Select
+    Next ' Pos
+End Function
