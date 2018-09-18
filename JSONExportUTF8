@@ -1,0 +1,112 @@
+' IMPORTANT: Work in progress!!! DO NOT USE !!!
+' Function: JSONExportUTF8
+' Purpose: Exports selected cells in an Excel worksheet and saves it to a JSON file with UTF-8 without BOM character encoding.
+' Language: VBA for Microsoft Excel
+' Version: 1.0 - Initial version 2018-06-17 by Michael Milette
+Sub JSONExportUTF8()
+
+    ' Declare constants.
+    Const adTypeText = 2
+    Const adModeReadWrite = 3
+    Const adTypeBinary = 1
+    Const adLF = 10
+    Const adSaveCreateOverWrite = 2
+    Const adWriteLine = 1
+    
+    ' Declare variables.
+    Dim sFilename As String      ' Output filename.
+    Dim iColumnCount As Integer  ' Column in row's selection.
+    Dim iRowCount As Long        ' Row in selection.
+    Dim sRow As String
+    Dim UTFStream As Object
+    Dim BinaryStream As Object
+    
+    If Selection.address = Cells.address then 
+        Msgbox "You cannot select an entire sheet!"
+        end
+    End If
+    if selection.rows.count < 2 then
+        Msgbox "You must select at least one heading row and one data row!"
+    End If
+    
+    ' Prompt user for destination file name.
+    sFilename = Application.GetSaveAsFilename(filefilter:="JSON UTF-8 (*.json),*json")
+    If sFilename = "False" Then
+        End
+    End If ' sFilename is blank.
+    
+    ' prepare UTF-8 stream
+    Set UTFStream = CreateObject("adodb.stream")
+    UTFStream.Type = adTypeText
+    UTFStream.Mode = adModeReadWrite
+    UTFStream.Charset = "UTF-8"
+    UTFStream.LineSeparator = adLF
+    UTFStream.Open
+    
+    ' Loop through each row in selection.
+    For iRowCount = 1 To Selection.Rows.Count
+        sRow = ""
+
+        ' If the row is not hidden.
+        If Not Selection.Rows(iRowCount).EntireRow.Hidden Then
+
+            ' Loop through each column in selection's row.
+            For iColumnCount = 1 To Selection.Columns.Count
+
+                ' If the column is not hidden.
+                If Not Selection.Columns(iColumnCount).EntireColumn.Hidden Then
+
+                    ' Add current cell's text to row with quotation marks. Escape any double quotes.
+                    sRow = sRow & """" & Replace(Selection.Cells(iRowCount, iColumnCount).Text, """", """""") & ""","
+
+                End If ' Column not hidden.
+
+            Next ' iColumnCount
+            
+            ' Write out the row to the file.
+            If (Len(sRow) > 3) Then
+                sRow = Left(sRow, Len(sRow) - 1) ' Trim off last comma.
+                UTFStream.WriteText sRow, adWriteLine
+            End If
+
+        End If ' Row not hidden.
+
+    Next ' iRowCount
+
+    ' Convert UTF-8 with BOM to UTF-8 without BOM.
+    UTFStream.Position = 3 ' Skip BOM
+    
+    ' Copy UTFStream to BinaryStream.
+    Set BinaryStream = CreateObject("adodb.stream")
+    With BinaryStream
+        .Type = adTypeBinary
+        .Mode = adModeReadWrite
+        .Open
+    End With
+    
+    ' Strips BOM (first 3 bytes).
+    With UTFStream
+        .CopyTo BinaryStream
+        .Flush
+        .Close
+    End With
+    
+    ' Disable error checking.
+    On Error Resume Next
+
+    ' Save to file.
+    With BinaryStream
+        .SaveToFile sFilename, adSaveCreateOverWrite
+        .Flush
+        .Close
+    End With
+    
+    ' If an error occurs, report it and end.
+    If Err <> 0 Then
+        MsgBox "Error (" & Err.Number & "): Cannot write to file " & vbCrLf & sFilename & vbCrLf & "Is the file already open?", vbCritical
+        End
+    End If ' Err
+
+    ' Enable error checking.
+    On Error GoTo 0
+End Sub
