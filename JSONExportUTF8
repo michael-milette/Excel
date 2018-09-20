@@ -85,9 +85,10 @@ Sub JSONExportUTF8()
                 ' If the column is not hidden.
                 If Not Selection.Columns(iColumnCount).EntireColumn.Hidden Then
                     
-                    sCommas = IIf(iColumnCount < Selection.Columns.Count, ",", "")
                     ' Add current cell's text to data field in JSON file. Escape any double quotes.
-                    UTFStream.WriteText Space(8) & """" & cHeaders(iColumnCount) & """:""" & Replace(Selection.Cells(iRowCount, iColumnCount).Text, """", """""") & """" & sCommas, adWriteLine
+                    sCommas = IIf(iColumnCount < Selection.Columns.Count, ",", "")
+                    sContent = Trim(Selection.Cells(iRowCount, iColumnCount).Text)
+                    UTFStream.WriteText Space(8) & """" & cHeaders(iColumnCount) & """: """ & Replace(sContent, """", "\""") & """" & sCommas, adWriteLine
                        
                 End If ' Column not hidden.
 
