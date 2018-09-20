@@ -93,7 +93,7 @@ Sub JSONExportUTF8()
 
             Next ' iColumnCount
             
-            If iFirstData < Selection.Rows.Count Then
+            If iRowCount < Selection.Rows.Count Then
                 UTFStream.WriteText Space(4) & "}, {", adWriteLine
             End If
         End If ' Row not hidden.
