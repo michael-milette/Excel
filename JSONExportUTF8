@@ -54,7 +54,7 @@ Sub JSONExportUTF8()
                 sHeader = ""
                 ' If the column is not hidden.
                 If Selection.Columns(iColumnCount).EntireColumn.Hidden Then
-                    cHeader.Add sHeader
+                    cHeaders.Add sHeader
                 Else
                     sTmp = UCase((Selection.Cells(iRowCount, iColumnCount).Text))
                     For iPos = 1 To Len(sTmp)
