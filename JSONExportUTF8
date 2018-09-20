@@ -1,4 +1,3 @@
-' IMPORTANT: Work in progress!!! DO NOT USE !!!
 ' Function: JSONExportUTF8
 ' Purpose: Exports selected cells in an Excel worksheet and saves it to a JSON file with UTF-8 without BOM character encoding.
 ' Language: VBA for Microsoft Excel
@@ -44,7 +43,7 @@ Sub JSONExportUTF8()
     UTFStream.Type = adTypeText
     UTFStream.Mode = adModeReadWrite
     UTFStream.Charset = "UTF-8"
-    UTFStream.LineSeparator = adCRLF
+    UTFStream.LineSeparator = adLF
     UTFStream.Open
     
     ' Loop through each row in selection.
