@@ -62,7 +62,7 @@ Sub JSONExportUTF8()
                            sHeader = sHeader & c$
                         End If
                     Next
-                    cHeaders.Add sHeader
+                    cHeaders.Add UCase(sHeader)
                     iFirstData = iRowCount + 1
                     Exit For
                 End If ' Column not hidden.
@@ -72,6 +72,7 @@ Sub JSONExportUTF8()
     
     ' Loop through each row in selection.
     UTFStream.WriteText "{", adWriteLine
+    UTFStream.WriteText Space(4) & """" & ActiveSheet.Name & """: {", adWriteLine
     For iRowCount = iFirstData To Selection.Rows.Count
 
         ' If the row is not hidden.
