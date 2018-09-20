@@ -1,4 +1,3 @@
-' IMPORTANT: Work in progress!!! DO NOT USE !!!
 ' Function: JSONExportUTF8
 ' Purpose: Exports selected cells in an Excel worksheet and saves it to a JSON file with UTF-8 without BOM character encoding.
 ' Language: VBA for Microsoft Excel
@@ -28,6 +27,7 @@ Sub JSONExportUTF8()
     End If
     If Selection.Rows.Count < 2 Then
         MsgBox "You must select at least one heading row and one data row!"
+        End
     End If
     
     ' Prompt user for destination file name.
@@ -51,28 +51,29 @@ Sub JSONExportUTF8()
             ' Loop through each column in selection's row.
             For iColumnCount = 1 To Selection.Columns.Count
 
+                sHeader = ""
                 ' If the column is not hidden.
                 If Selection.Columns(iColumnCount).EntireColumn.Hidden Then
-                    cHeader.Add ""
+                    cHeader.Add sHeader
                 Else
-                    sTmp = (Selection.Cells(iRowCount, iColumnCount).text)
+                    sTmp = UCase((Selection.Cells(iRowCount, iColumnCount).Text))
                     For iPos = 1 To Len(sTmp)
-                        c$ = Mid(sTmp, iPoz, 1)
-                        If c$ Like [A-Z,0-9] Then
+                        c$ = Mid(sTmp, iPos, 1)
+                        If c$ Like "[A-Z0-9]" Then
                            sHeader = sHeader & c$
                         End If
                     Next
                     cHeaders.Add UCase(sHeader)
-                    iFirstData = iRowCount + 1
-                    Exit For
                 End If ' Column not hidden.
             Next ' iColumnCount
+            iFirstData = iRowCount + 1
+            Exit For
         End If ' Row not hidden.
     Next
     
     ' Loop through each row in selection.
     UTFStream.WriteText "{", adWriteLine
-    UTFStream.WriteText Space(4) & """" & ActiveSheet.Name & """: {", adWriteLine
+    UTFStream.WriteText Space(4) & """" & LCase(ActiveSheet.Name) & """: [{", adWriteLine
     For iRowCount = iFirstData To Selection.Rows.Count
 
         ' If the row is not hidden.
@@ -86,17 +87,19 @@ Sub JSONExportUTF8()
                     
                     sCommas = IIf(iColumnCount < Selection.Columns.Count, ",", "")
                     ' Add current cell's text to data field in JSON file. Escape any double quotes.
-                    UTFStream.WriteText Space(8) & """" & cHeaders(iColumnCount) & """:""" & Replace(Selection.Cells(iRowCount, iColumnCount).text, """", """""") & """" & sCommas, adWriteLine
+                    UTFStream.WriteText Space(8) & """" & cHeaders(iColumnCount) & """:""" & Replace(Selection.Cells(iRowCount, iColumnCount).Text, """", """""") & """" & sCommas, adWriteLine
                        
                 End If ' Column not hidden.
 
             Next ' iColumnCount
             
-            UTFStream.WriteText Space(4) & IIf(iFirstData < Selection.Rows.Count, "},{", "}"), adWriteLine
-            
+            If iFirstData < Selection.Rows.Count Then
+                UTFStream.WriteText Space(4) & "}, {", adWriteLine
+            End If
         End If ' Row not hidden.
 
     Next ' iRowCount
+    UTFStream.WriteText Space(4) & "}]", adWriteLine
     UTFStream.WriteText "}", adWriteLine
 
     ' Convert UTF-8 with BOM to UTF-8 without BOM.
