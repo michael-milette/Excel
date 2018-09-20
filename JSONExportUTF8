@@ -20,13 +20,14 @@ Sub JSONExportUTF8()
     Dim sRow As String
     Dim UTFStream As Object
     Dim BinaryStream As Object
+    Dim cHeaders As New Collection
     
-    If Selection.address = Cells.address then 
-        Msgbox "You cannot select an entire sheet!"
-        end
+    If Selection.Address = Cells.Address Then
+        MsgBox "You cannot select an entire sheet!"
+        End
     End If
-    if selection.rows.count < 2 then
-        Msgbox "You must select at least one heading row and one data row!"
+    If Selection.Rows.Count < 2 Then
+        MsgBox "You must select at least one heading row and one data row!"
     End If
     
     ' Prompt user for destination file name.
@@ -45,7 +46,33 @@ Sub JSONExportUTF8()
     
     ' Loop through each row in selection.
     For iRowCount = 1 To Selection.Rows.Count
-        sRow = ""
+        ' If the row is not hidden.
+        If Not Selection.Rows(iRowCount).EntireRow.Hidden Then
+            ' Loop through each column in selection's row.
+            For iColumnCount = 1 To Selection.Columns.Count
+
+                ' If the column is not hidden.
+                If Selection.Columns(iColumnCount).EntireColumn.Hidden Then
+                    cHeader.Add ""
+                Else
+                    sTmp = (Selection.Cells(iRowCount, iColumnCount).text)
+                    For iPos = 1 To Len(sTmp)
+                        c$ = Mid(sTmp, iPoz, 1)
+                        If c$ Like [A-Z,0-9] Then
+                           sHeader = sHeader & c$
+                        End If
+                    Next
+                    cHeaders.Add sHeader
+                    iFirstData = iRowCount + 1
+                    Exit For
+                End If ' Column not hidden.
+            Next ' iColumnCount
+        End If ' Row not hidden.
+    Next
+    
+    ' Loop through each row in selection.
+    UTFStream.WriteText "{", adWriteLine
+    For iRowCount = iFirstData To Selection.Rows.Count
 
         ' If the row is not hidden.
         If Not Selection.Rows(iRowCount).EntireRow.Hidden Then
@@ -55,23 +82,21 @@ Sub JSONExportUTF8()
 
                 ' If the column is not hidden.
                 If Not Selection.Columns(iColumnCount).EntireColumn.Hidden Then
-
-                    ' Add current cell's text to row with quotation marks. Escape any double quotes.
-                    sRow = sRow & """" & Replace(Selection.Cells(iRowCount, iColumnCount).Text, """", """""") & ""","
-
+                    
+                    sCommas = IIf(iColumnCount < Selection.Columns.Count, ",", "")
+                    ' Add current cell's text to data field in JSON file. Escape any double quotes.
+                    UTFStream.WriteText Space(8) & """" & cHeaders(iColumnCount) & """:""" & Replace(Selection.Cells(iRowCount, iColumnCount).text, """", """""") & """" & sCommas, adWriteLine
+                       
                 End If ' Column not hidden.
 
             Next ' iColumnCount
             
-            ' Write out the row to the file.
-            If (Len(sRow) > 3) Then
-                sRow = Left(sRow, Len(sRow) - 1) ' Trim off last comma.
-                UTFStream.WriteText sRow, adWriteLine
-            End If
-
+            UTFStream.WriteText Space(4) & IIf(iFirstData < Selection.Rows.Count, "},{", "}"), adWriteLine
+            
         End If ' Row not hidden.
 
     Next ' iRowCount
+    UTFStream.WriteText "}", adWriteLine
 
     ' Convert UTF-8 with BOM to UTF-8 without BOM.
     UTFStream.Position = 3 ' Skip BOM
